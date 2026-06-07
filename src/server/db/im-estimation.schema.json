@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://intentmill.local/schemas/im-estimation.schema.json",
+  "title": "IntentMill Issue Estimation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["development_mode", "hours", "rationale"],
+  "properties": {
+    "development_mode": {
+      "type": "string",
+      "enum": ["agent", "agent-led", "human-led"]
+    },
+    "hours": {
+      "type": "number",
+      "minimum": 1
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
