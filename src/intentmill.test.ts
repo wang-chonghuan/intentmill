@@ -198,7 +198,7 @@ describe('IntentMill workflow boundaries', () => {
     expect(persisted.exitCode).toBe(0)
     expect(persisted.stderrDeleted).toBeUndefined()
     await expect(fs.readFile(stderrPath, 'utf8')).resolves.toContain(
-      'failed to write planning artifacts to database',
+      'failed to persist successful planning artifacts',
     )
   })
 
@@ -302,7 +302,7 @@ describe('IntentMill workflow boundaries', () => {
         const finished = await waitForRunStatus(run.runId, 'failed')
 
         expect(finished.finalGateDecision).toBe('ready')
-        expect(finished.error).toContain('Failed to write planning artifacts')
+        expect(finished.error).toContain('Failed to persist successful planning artifacts')
         expect(await fs.readFile(finished.stdoutPath, 'utf8')).toContain(
           'fake stdout',
         )
@@ -312,7 +312,7 @@ describe('IntentMill workflow boundaries', () => {
         expect(persisted.status).toBe('failed')
         expect(persisted.stderrDeleted).toBeUndefined()
         expect(await fs.readFile(finished.stderrPath, 'utf8')).toContain(
-          'failed to write planning artifacts to database',
+          'failed to persist successful planning artifacts',
         )
       } finally {
         process.env.PATH = previousPath

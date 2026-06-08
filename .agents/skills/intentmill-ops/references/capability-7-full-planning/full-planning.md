@@ -47,7 +47,7 @@ The result should be ready for downstream execution planning. Cap7 must not prod
 
 - Do not modify Linear directly.
 - Do not run Codex exec for implementation.
-- Do not create a PR, commit, or push unless the user explicitly asks.
+- Do not create a PR, commit, or push inside cap7. When cap7 is launched through IntentMill's UI runner, the IntentMill server may commit and push the final `.t2p/tickets/<ISSUE-ID>/` artifacts after the final gate is `ready`.
 - Do not write code in the target project except through the project's own t2p initialisation/refresh if that skill owns such writes.
 - Do not load external Linear-ticket skills for cap7; all required generation and gate rules live in this skill.
 - Do not run meaningless, placeholder, or exploratory probe commands. When evidence is needed, read real files or run concrete project commands with a clear purpose.

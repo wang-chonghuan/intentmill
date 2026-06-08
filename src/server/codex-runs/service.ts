@@ -1,6 +1,7 @@
-import { spawn } from 'node:child_process'
+import { execFile, spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { promisify } from 'node:util'
 
 import { resolvePublicProject } from '../config'
 import { updateIssue } from '../issues/service'
@@ -44,6 +45,12 @@ type CodexRunMetadata = {
   artifactDbWrite?: {
     status: 'written'
     at: string
+  }
+  artifactGitSync?: {
+    status: 'clean' | 'pushed'
+    at: string
+    branch: string
+    commit?: string
   }
   error?: string
   paths: {
@@ -95,6 +102,7 @@ const RUN_TIMEOUT_MS = 20 * 60 * 1000
 const LOCK_STALE_MS = 60 * 1000
 const KILL_GRACE_MS = 1_500
 const LAST_MESSAGE_MAX_BYTES = 64 * 1024
+const execFileAsync = promisify(execFile)
 
 const timeoutTimers = new Map<string, NodeJS.Timeout>()
 
@@ -572,7 +580,7 @@ Required flow:
 Boundaries:
 - Do not implement target-project source code.
 - Do not create a PR.
-- Do not commit or push.
+- Do not commit or push; the IntentMill server performs final Git sync after a successful ready gate.
 - Do not modify Linear.
 - Do not write IntentMill database fields.
 - Only generate or refresh local planning artifacts in the target issue worktree.
@@ -689,12 +697,17 @@ async function prepareSuccessfulRunForTerminalWrite(
       project: metadata.project,
       issueId: metadata.issueId,
     })
+    const gitSync = await commitAndPushIssuePlanningArtifacts({
+      project: metadata.project,
+      issueId: metadata.issueId,
+    })
     const updated = await updateIssue(metadata.issueId, patch)
     if (!updated) {
       throw new Error(`Issue ${metadata.issueId} was not found in the local database.`)
     }
     return cleanupSuccessfulStderr({
       ...metadata,
+      artifactGitSync: gitSync,
       artifactDbWrite: {
         status: 'written',
         at: new Date().toISOString(),
@@ -704,12 +717,12 @@ async function prepareSuccessfulRunForTerminalWrite(
     const message = error instanceof Error ? error.message : String(error)
     await appendStderr(
       metadata.paths.stderrPath,
-      `\n[runner] failed to write planning artifacts to database: ${message}\n`,
+      `\n[runner] failed to persist successful planning artifacts: ${message}\n`,
     ).catch(() => undefined)
     return {
       ...metadata,
       status: 'failed' as const,
-      error: `Failed to write planning artifacts to database: ${message}`,
+      error: `Failed to persist successful planning artifacts: ${message}`,
     }
   }
 }
@@ -722,9 +735,7 @@ export async function readIssuePlanningArtifactPatch({
   issueId: string
 }): Promise<Pick<IssueUpdate, 'im_summary' | 'im_solution' | 'im_criteria' | 'im_estimation'>> {
   const refsDir = path.join(
-    process.cwd(),
-    '.workspace',
-    `${project}--${issueId}`,
+    issueWorktreePath({ project, issueId }),
     '.t2p',
     'tickets',
     issueId,
@@ -750,6 +761,114 @@ export async function readIssuePlanningArtifactPatch({
     im_criteria: criteria,
     im_estimation: parseIssueEstimationMarkdown(estimationMarkdown),
   }
+}
+
+export async function commitAndPushIssuePlanningArtifacts({
+  project,
+  issueId,
+}: {
+  project: string
+  issueId: string
+}) {
+  const worktreePath = issueWorktreePath({ project, issueId })
+  const stat = await fs.stat(worktreePath).catch(() => null)
+  if (!stat?.isDirectory()) {
+    throw new Error(`Issue worktree does not exist: ${worktreePath}`)
+  }
+
+  await git(worktreePath, ['rev-parse', '--is-inside-work-tree'])
+  const branch = (await git(worktreePath, ['branch', '--show-current'])).trim()
+  if (!branch) {
+    throw new Error('Issue worktree is not on a branch.')
+  }
+
+  const ticketPath = `.t2p/tickets/${issueId}/`
+  const changedPaths = await getChangedGitPaths(worktreePath)
+  const disallowedPaths = changedPaths.filter(
+    (changedPath) => !changedPath.startsWith(ticketPath),
+  )
+  if (disallowedPaths.length) {
+    throw new Error(
+      `Refusing to commit non-ticket changes: ${disallowedPaths.join(', ')}`,
+    )
+  }
+
+  if (!changedPaths.length) {
+    return {
+      status: 'clean' as const,
+      at: new Date().toISOString(),
+      branch,
+    }
+  }
+
+  await git(worktreePath, ['add', '--', ticketPath])
+  const stagedPaths = (
+    await git(worktreePath, ['diff', '--cached', '--name-only', '--', ticketPath])
+  )
+    .split(/\r?\n/)
+    .map((value) => value.trim())
+    .filter(Boolean)
+  if (!stagedPaths.length) {
+    return {
+      status: 'clean' as const,
+      at: new Date().toISOString(),
+      branch,
+    }
+  }
+
+  await git(worktreePath, ['commit', '-m', `Add ${issueId} planning artifacts`])
+  const commit = (await git(worktreePath, ['rev-parse', '--short', 'HEAD'])).trim()
+  await git(worktreePath, ['push', '-u', 'origin', 'HEAD'])
+
+  return {
+    status: 'pushed' as const,
+    at: new Date().toISOString(),
+    branch,
+    commit,
+  }
+}
+
+async function getChangedGitPaths(worktreePath: string) {
+  const output = await git(worktreePath, ['status', '--porcelain=v1'])
+  return output
+    .split(/\r?\n/)
+    .flatMap((line) => parsePorcelainStatusPaths(line))
+    .filter(Boolean)
+}
+
+function parsePorcelainStatusPaths(line: string) {
+  if (!line.trim()) {
+    return []
+  }
+  const rawPath = line.slice(3).trim()
+  const paths = rawPath.includes(' -> ') ? rawPath.split(' -> ') : [rawPath]
+  return paths.map((value) => value.replace(/^"|"$/g, ''))
+}
+
+async function git(worktreePath: string, args: string[]) {
+  try {
+    const { stdout } = await execFileAsync('git', ['-C', worktreePath, ...args], {
+      maxBuffer: 10 * 1024 * 1024,
+    })
+    return stdout
+  } catch (error) {
+    const message =
+      error && typeof error === 'object' && 'stderr' in error
+        ? String((error as { stderr?: unknown }).stderr || '')
+        : ''
+    const fallback = error instanceof Error ? error.message : String(error)
+    throw new Error(message.trim() || fallback)
+  }
+}
+
+function issueWorktreePath({
+  project,
+  issueId,
+}: {
+  project: string
+  issueId: string
+}) {
+  return path.join(process.cwd(), '.workspace', `${project}--${issueId}`)
 }
 
 async function readRequiredArtifact(filePath: string) {

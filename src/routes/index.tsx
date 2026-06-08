@@ -13,9 +13,11 @@ import {
   ArrowDownUp,
   ArrowUp,
   Blocks,
+  Code2,
   MoreHorizontal,
   Play,
   RefreshCw,
+  SearchCheck,
   Trash2,
   X,
 } from 'lucide-react'
@@ -1353,7 +1355,23 @@ function ActionMenu({
             type="button"
           >
             <Play className="size-3.5" aria-hidden="true" />
-            Generate Plan
+            Plan
+          </button>
+          <button
+            className="flex h-9 w-full items-center gap-2 rounded px-2 text-left text-xs font-medium text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400"
+            disabled
+            type="button"
+          >
+            <Code2 className="size-3.5" aria-hidden="true" />
+            Develop
+          </button>
+          <button
+            className="flex h-9 w-full items-center gap-2 rounded px-2 text-left text-xs font-medium text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400"
+            disabled
+            type="button"
+          >
+            <SearchCheck className="size-3.5" aria-hidden="true" />
+            Review
           </button>
         </div>
       ) : null}
