@@ -1,0 +1,60 @@
+{
+  "modules": {
+    "agent-workflow": {
+      "description": "Repo-local agent workflow that turns configured issues into reviewed planning artifacts.",
+      "paths": [
+        ".agents/skills/intentmill-ops"
+      ]
+    },
+    "runtime": {
+      "description": "IntentMill web, server, and CLI runtime for local issue planning workflows.",
+      "paths": [
+        "src"
+      ],
+      "children": {
+        "cli": {
+          "description": "Command-line entry points for database setup, issue operations, sync, workflow prompts, and workspaces.",
+          "paths": [
+            "scripts"
+          ]
+        },
+        "planning-ui": {
+          "description": "Single-page issue planning table, cycle controls, markdown dialogs, and run status polling.",
+          "paths": [
+            "src/routes",
+            "src/router.tsx",
+            "src/styles.css"
+          ]
+        },
+        "server": {
+          "description": "Server-side configuration, data access, sync orchestration, and planning run coordination.",
+          "paths": [
+            "src/server"
+          ],
+          "children": {
+            "codex-runs": {
+              "description": "Background Codex planning run lifecycle, status recovery, artifact persistence, and Git sync.",
+              "paths": [
+                "src/server/codex-runs"
+              ]
+            },
+            "issue-persistence": {
+              "description": "PostgreSQL schema, issue queries, planning fields, metrics, and update behavior.",
+              "paths": [
+                "src/server/db",
+                "src/server/issues"
+              ]
+            },
+            "linear-sync": {
+              "description": "Linear sprint import, local reconciliation, JSON snapshots, and sync history reads.",
+              "paths": [
+                "src/server/linear",
+                "src/server/sync-runs"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

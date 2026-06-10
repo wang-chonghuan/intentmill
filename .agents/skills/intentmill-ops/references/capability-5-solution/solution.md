@@ -83,12 +83,26 @@ Requirements:
 - Include limited uncertainty that the coding agent must resolve by reading code.
 - If the exact file cannot be identified with reasonable effort, write a bounded code-search instruction such as "start by searching `apps/foo/src` for the existing copy-button timeout and follow that component's nearest shared constants/config pattern". Do not pretend certainty.
 
+## DB and Schema Discipline
+
+When the requested implementation touches database schema, tables, columns, constraints, migrations, generated schema files, event contracts, or durable domain state, `im-solution.md` must be explicit enough to prevent the coding agent from inventing a data model.
+
+Requirements:
+
+- If the requirement, engineered requirement, acceptance criteria, existing design note, or upstream plan already defines tables, columns, constraints, JSONB schemas, or event contracts, treat those definitions as the implementation boundary. Reuse them directly and do not expand business fields or change semantics unless the source material requires it.
+- Do not create a new table unless it is defined by the requirement, engineered requirement, acceptance criteria, existing design note, or explicit upstream plan. If implementation appears to require an undefined table, record it as a product or architecture decision gap for the coding agent to resolve with the human; do not design or implement the table in the solution.
+- Required technical columns may only be included when they come from an existing project database convention or schema-generation workflow, such as standard IDs, tenant scoping, timestamps, or audit columns. Name the convention or existing pattern that justifies them.
+- For changes to existing tables, columns, constraints, check constraints, enums, event-type whitelists, indexes, unique constraints, foreign keys, defaults, or migrations, instruct the coding agent to inspect the current table definition and constraints before editing. The solution should name the table or contract and the kind of existing constraint to check.
+- For compatibility-sensitive changes, especially event-type whitelists, check constraints, enum-like columns, unique constraints, and migrations over existing data, require the coding agent to inspect existing DEV data values or current environment state before tightening constraints. Preserve historical values unless the requirement explicitly says to remove or migrate them.
+- If the project has an established database workflow for schema changes, such as a schema source of truth, generated DDL, migration helper, or DEV apply-and-verify process, name that workflow as the required execution path. Do not imply that editing a schema definition alone is sufficient when the project requires an apply or verification step.
+- For durable business state, identify the canonical domain store when the requirement defines one. Do not treat logs, analytics events, surface events, telemetry, or audit records as the only durable business store unless the requirement explicitly defines them that way.
+
 ## Exclusions
 
 Do not include:
 
 - Code snippets, pseudo-code blocks, diffs, or copied implementation code.
-- Test cases, test commands, QA steps, or verification matrices. Expected verification belongs in `im-ac.md`.
+- Test cases, test commands, QA steps, or verification matrices. Expected verification belongs in `im-ac.md`; solution may remind the coding agent to satisfy `im-ac.md`, but must not restate, expand, shrink, or reinterpret its acceptance scope.
 - Linear metadata such as assignee, project, priority, labels, cycle, or branch names.
 - Personal absolute paths, usernames, home directories, skill installation paths, temporary paths, or paths outside the target repo root.
 - Internal research notes, command output, or narration that the skill read evodocs.
@@ -98,7 +112,7 @@ Do not include:
 
 ## Readiness Review
 
-Before finalising `im-solution.md`, run this semantic review internally. The solution is ready only if all twelve dimensions pass.
+Before finalising `im-solution.md`, run this semantic review internally. The solution is ready only if all fourteen dimensions pass.
 
 1. **Required shape**: Contains `## Solution`, then exactly `### Overview`, `### Details`, and `### Steps` in that order. `Steps` is a numbered list.
 2. **Progressive detail**: Overview is brief, Details is deeper, and Steps is the most concrete; the sections do not merely repeat each other.
@@ -108,12 +122,14 @@ Before finalising `im-solution.md`, run this semantic review internally. The sol
 6. **Requirement and AC alignment**: Solves the behaviour requested in `im-req-engineered.md` and is sufficient to satisfy `im-ac.md` without adding unrelated scope.
 7. **Path-safe**: Contains no personal absolute paths, usernames, home directories, skill installation paths, temporary paths, or paths outside the target repo root. All project paths are repo-root-relative.
 8. **Preservation constraints**: Calls out important existing UX, performance, data, permission, contract, lifecycle, integration, or compatibility behaviours that must remain unchanged.
-9. **No test leakage**: Leaves test cases, verification commands, and QA procedure to acceptance criteria rather than repeating them in Solution.
-10. **No code leakage**: Contains no code snippets, pseudo-code blocks, copied implementation code, or diffs.
-11. **Implementation usefulness**: A coding agent can start implementation from the artifact and named code areas without first doing broad rediscovery of ownership, source of truth, or change order.
-12. **Step quality**: Numbered steps are concrete actions with meaningful sequencing and expected edit areas, not generic commands such as "update backend" or "fix UI".
+9. **DB and schema discipline**: If DB/schema work is in scope, the solution does not invent undefined tables, uses defined schema boundaries, requires inspection of existing table definitions and constraints before altering them, preserves compatibility-sensitive existing values, and names the project's required schema-change workflow when one exists.
+10. **Canonical state discipline**: If durable business state is in scope, the solution identifies the canonical store defined by requirements or existing architecture and does not replace it with logs, telemetry, analytics, or surface events unless those are explicitly the canonical store.
+11. **No test leakage**: Leaves test cases, verification commands, QA procedure, and verification matrices to acceptance criteria rather than repeating them in Solution. If solution and `im-ac.md` conflict on acceptance scope, `im-ac.md` is authoritative.
+12. **No code leakage**: Contains no code snippets, pseudo-code blocks, copied implementation code, or diffs.
+13. **Implementation usefulness**: A coding agent can start implementation from the artifact and named code areas without first doing broad rediscovery of ownership, source of truth, or change order.
+14. **Step quality**: Numbered steps are concrete actions with meaningful sequencing and expected edit areas, not generic commands such as "update backend" or "fix UI".
 
-If one or more dimensions fail, revise the solution before writing `im-solution.md` unless the user explicitly asks for a rough draft. When revising, prefer improving the weakest missing evidence, entry point, or step sequence rather than expanding every section.
+If one or more dimensions fail, revise the solution before writing `im-solution.md` unless the user explicitly asks for a rough draft. When revising, prefer improving the weakest missing evidence, entry point, schema discipline, source-of-truth decision, or step sequence rather than expanding every section.
 
 After writing `im-solution.md`, run cap11 targeting `im-solution.md`. If cap11 returns `revise`, rewrite the solution from cap5 using the gate findings and run the same targeted cap11 review again before cap6 starts.
 
@@ -142,6 +158,8 @@ If relevant evidence lives outside the repo root, mention the concept or depende
 - Steps that are too vague, such as "update the frontend", "wire the backend", or "add tests".
 - A solution that says "create a config file" without checking for an existing source of truth.
 - A solution that includes test steps, test commands, QA procedure, code snippets, or pseudo-code.
+- A solution that creates a table or durable store not defined by the requirement, engineered requirement, acceptance criteria, existing design note, or upstream plan.
+- A solution that changes an existing table, event whitelist, check constraint, enum-like value, unique constraint, or migration path without first requiring inspection of the existing definition, constraints, and relevant DEV data.
 - A broad architecture essay that does not tell the coding agent where to start.
 - A list of files without explaining the change path and constraints.
 - Forbidden local paths instead of repo-root-relative paths.

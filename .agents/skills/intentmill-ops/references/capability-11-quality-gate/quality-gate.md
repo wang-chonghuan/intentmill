@@ -83,6 +83,7 @@ Score each dimension as pass or fail:
 6. **Path safety**: Generated artifacts contain no personal absolute paths, usernames, home directories, skill installation paths, temporary paths, or paths outside the target repo root. Any project paths are repo-root-relative.
 7. **Conciseness**: Artifacts are compact enough for future agents to use; they avoid bulky research logs, command dumps, repeated requirements, and code dumps.
 8. **Artifact separation**: Requirements explain what and why; acceptance criteria define observable completion; solution explains how at a high level. Test commands and QA procedures stay out of requirement and solution artifacts.
+9. **DB/schema discipline**: When artifacts propose database schema, migration, table, field, constraint, JSONB schema, event contract, or durable-state work, they do not invent undefined tables or stores, and they require existing table definitions and constraints to be inspected before changes.
 
 The overall gate is ready only if all applicable dimensions pass and no blocking artifact-specific checks fail.
 
@@ -138,12 +139,17 @@ Apply these checks to `im-solution.md` when present:
 6. **Requirement and AC alignment**: Solves the behaviour requested in `im-req-engineered.md` and satisfies `im-ac.md` when present without adding unrelated scope.
 7. **Path-safe**: Contains no forbidden local paths; all project paths are repo-root-relative.
 8. **Preservation constraints**: Calls out important existing UX, performance, data, permission, contract, lifecycle, integration, or compatibility behaviours that must remain unchanged.
-9. **No test leakage**: Leaves test cases, verification commands, and QA procedure to acceptance criteria rather than repeating them in Solution.
-10. **No code leakage**: Contains no code snippets, pseudo-code blocks, copied implementation code, or diffs.
-11. **Implementation usefulness**: A coding agent can start implementation from the artifact and named code areas without first doing broad rediscovery of ownership, source of truth, or change order.
-12. **Step quality**: Numbered steps are concrete actions with meaningful sequencing and expected edit areas, not generic commands such as "update backend" or "fix UI".
+9. **Schema boundary discipline**: If the solution proposes a new table, durable store, column set, JSONB schema, event contract, or schema object, it is defined by the requirement, engineered requirement, acceptance criteria, existing design note, or explicit upstream plan. Undefined tables or stores are marked as product or architecture decision gaps, not invented implementation scope.
+10. **Existing DB constraint inspection**: If the solution changes an existing table, field, constraint, index, unique key, foreign key, check constraint, enum-like value, event-type whitelist, default, or migration, it instructs the coding agent to inspect the current table definition and constraints before editing.
+11. **Compatibility-sensitive migration awareness**: If the solution changes check constraints, event-type whitelists, enum-like columns, unique constraints, or migrations over existing data, it requires checking existing DEV data values or current environment state and preserving historical values unless removal is explicitly required.
+12. **Project DB workflow clarity**: If the project has an established schema source of truth, generated DDL, migration helper, or DEV apply-and-verify process, the solution names that workflow as the required execution path rather than implying that editing schema files alone is sufficient.
+13. **Canonical durable state**: If durable business state is in scope, the solution identifies the canonical domain store defined by requirements or existing architecture and does not use logs, telemetry, analytics, audit records, or surface events as the only durable store unless explicitly required.
+14. **No test leakage**: Leaves test cases, verification commands, QA procedure, and verification matrices to `im-ac.md`. It may tell the coding agent to satisfy `im-ac.md`, but it must not restate, expand, shrink, or reinterpret the acceptance scope.
+15. **No code leakage**: Contains no code snippets, pseudo-code blocks, copied implementation code, or diffs.
+16. **Implementation usefulness**: A coding agent can start implementation from the artifact and named code areas without first doing broad rediscovery of ownership, source of truth, schema boundaries, or change order.
+17. **Step quality**: Numbered steps are concrete actions with meaningful sequencing and expected edit areas, not generic commands such as "update backend" or "fix UI".
 
-Solution is ready only if all twelve dimensions pass.
+Solution is ready only if all seventeen dimensions pass.
 
 ## Estimation Checks
 
@@ -230,6 +236,10 @@ Map revise findings back to the owning cap:
 - If `im-req-summarized.md` adds new scope, align it back to `im-req-engineered.md`.
 - If acceptance criteria lack `AC-N` numbering, duplicate numbers, or include implementation steps, require a rewrite before solution generation.
 - If solution content says only "update relevant files", require targeted code inspection and named entry points.
+- If solution content introduces a new table, durable store, schema object, or event contract not defined by the requirement, engineered requirement, acceptance criteria, existing design note, or upstream plan, require cap5 to replace it with a decision gap or cite the defining source.
+- If solution content changes existing DB tables, fields, constraints, event whitelists, enum-like values, or migrations without requiring inspection of current definitions and constraints, require cap5 to add that investigation step.
+- If solution content tightens compatibility-sensitive constraints without requiring existing DEV data or environment-state inspection, require cap5 to add the compatibility check and preserve historical values unless removal is explicitly required.
+- If solution content treats logs, telemetry, analytics, audit records, or surface events as the only durable business state without an explicit requirement, require cap5 to identify the canonical domain store or mark the store decision as unresolved.
 - If estimation output contains multiple modes, a table, or a range, require exactly one recommended mode and one numeric hour value.
 - If estimation rationale does not mention solution steps and test-case AC count, require a grounded rewrite.
 - If any artifact says "existing behaviour still works", require the exact behaviour or contract to be named.
