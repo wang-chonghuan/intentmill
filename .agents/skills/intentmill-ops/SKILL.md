@@ -1,6 +1,6 @@
 ---
 name: intentmill-ops
-description: Load when the user asks to run IntentMill project operations, initialise an issue worktree, initialise t2p ticket artifacts, engineer local issue requirements, generate local IntentMill acceptance criteria or solution artifacts, estimate IntentMill issue work, run the full IntentMill planning flow, review IntentMill issue artifacts, or invokes intentmill-ops cap1/cap2/cap3/cap4/cap5/cap6/cap7/cap11. Use for IntentMill-managed project repos from ssot-config.json. Do not load for generic Git work, generic estimation, or generic solution writing outside IntentMill.
+description: Load when the user asks to run IntentMill project operations, initialise an issue worktree, initialise t2p ticket artifacts, engineer local issue requirements, grill a requirement into an IntentMill spec, generate local IntentMill acceptance criteria or solution artifacts, estimate IntentMill issue work, run the full IntentMill planning flow, review IntentMill issue artifacts, or invokes intentmill-ops cap1/cap2/cap3/cap4/cap5/cap6/cap7/cap8/cap11. Use for IntentMill-managed project repos from ssot-config.json. Do not load for generic Git work, generic estimation, or generic solution writing outside IntentMill.
 ---
 
 # intentmill-ops
@@ -84,7 +84,7 @@ Trigger phrases include:
 - `generate acceptance criteria`
 - `生成 im-ac`
 
-Purpose: generate developer-ready, test-agent-ready acceptance criteria from the engineered requirement.
+Purpose: generate developer-ready, test-agent-ready acceptance criteria from the grilled IntentMill spec.
 
 Read `references/capability-4-acceptance-criteria/acceptance-criteria.md` and follow it exactly. This capability writes:
 
@@ -94,7 +94,7 @@ Rules:
 
 - Run the shared input checks at the top of this skill.
 - Ensure cap1 and cap2 have already prepared the issue worktree and ticket context; run them first if needed.
-- Require `refs/im-req-engineered.md`; if it is missing, run cap3 first.
+- Require `refs/im-spec.md`; if it is missing, run cap8 first. Cap8 itself requires cap3 output.
 - Do not write solution content in cap4.
 - After writing `im-ac.md`, run cap11 targeting `im-ac.md`. If cap11 returns `revise`, regenerate AC from cap4 and run cap11 again before downstream caps continue.
 - Do not modify Linear directly.
@@ -109,7 +109,7 @@ Trigger phrases include:
 - `generate solution`
 - `生成 im-solution`
 
-Purpose: generate a developer-ready implementation solution from the engineered requirement and acceptance criteria.
+Purpose: generate a developer-ready implementation solution from the grilled IntentMill spec and acceptance criteria.
 
 Read `references/capability-5-solution/solution.md` and follow it exactly. This capability writes:
 
@@ -119,7 +119,7 @@ Rules:
 
 - Run the shared input checks at the top of this skill.
 - Ensure cap1 and cap2 have already prepared the issue worktree and ticket context; run them first if needed.
-- Require `refs/im-req-engineered.md`; if it is missing, run cap3 first.
+- Require `refs/im-spec.md`; if it is missing, run cap8 first. Cap8 itself requires cap3 output.
 - Require `refs/im-ac.md`; if it is missing, run cap4 first.
 - Do not write or rewrite acceptance criteria in cap5.
 - After writing `im-solution.md`, run cap11 targeting `im-solution.md`. If cap11 returns `revise`, regenerate the solution from cap5 and run cap11 again before downstream caps continue.
@@ -135,7 +135,7 @@ Trigger phrases include:
 - `generate estimation`
 - `生成 im-estimation`
 
-Purpose: estimate the total development hours and recommended execution mode from the engineered requirement, acceptance criteria, and solution.
+Purpose: estimate the total development hours and recommended execution mode from the grilled IntentMill spec, acceptance criteria, and solution.
 
 Read `references/capability-6-estimation/estimation.md` and follow it exactly. This capability writes:
 
@@ -145,7 +145,7 @@ Rules:
 
 - Run the shared input checks at the top of this skill.
 - Ensure cap1 and cap2 have already prepared the issue worktree and ticket context; run them first if needed.
-- Require `refs/im-req-engineered.md`; if it is missing, run cap3 first.
+- Require `refs/im-spec.md`; if it is missing, run cap8 first. Cap8 itself requires cap3 output.
 - Require `refs/im-ac.md`; if it is missing, run cap4 first.
 - Require `refs/im-solution.md`; if it is missing, run cap5 first.
 - Output exactly one recommended development mode, one precise total hour value, and one short rationale.
@@ -160,14 +160,15 @@ Trigger phrases include:
 - `intentmill-ops cap7`
 - `跑完整流程`
 - `run full planning flow`
-- `cap1-cap6 全部走一遍`
+- `cap1-cap8 全部走一遍`
 
-Purpose: run cap1 through cap6 in order for one issue, with cap11 semantic gates after each generated artifact stage.
+Purpose: run cap1, cap2, cap3, cap8, cap4, cap5, and cap6 in order for one issue, with cap11 semantic gates after each generated artifact stage.
 
 Read `references/capability-7-full-planning/full-planning.md` and follow it exactly. This capability creates or refreshes the full planning artifact set:
 
 - `.t2p/tickets/<ISSUE-ID>/refs/im-req-engineered.md`
 - `.t2p/tickets/<ISSUE-ID>/refs/im-req-summarized.md`
+- `.t2p/tickets/<ISSUE-ID>/refs/im-spec.md`
 - `.t2p/tickets/<ISSUE-ID>/refs/im-ac.md`
 - `.t2p/tickets/<ISSUE-ID>/refs/im-solution.md`
 - `.t2p/tickets/<ISSUE-ID>/refs/im-estimation.md`
@@ -176,12 +177,42 @@ Read `references/capability-7-full-planning/full-planning.md` and follow it exac
 Rules:
 
 - Run the shared input checks at the top of this skill.
-- Execute capabilities in strict order: cap1, cap2, cap3, cap4, cap5, cap6.
+- Execute capabilities in strict order: cap1, cap2, cap3, cap8, cap4, cap5, cap6.
 - Do not skip a stage because an old artifact exists unless the user explicitly asks to reuse existing artifacts.
+- Cap8 is interactive and must use `n-grill`. If the run environment cannot ask the user questions, stop after cap3/cap11 and report that cap8 human answers are required before cap4.
 - Respect each cap's targeted cap11 review loop before moving to the next cap.
 - After cap6 passes targeted cap11, run cap11 in `all` mode for the final artifact set.
+- If final cap11 returns `ready`, commit only `.t2p/tickets/<ISSUE-ID>/` from the issue worktree and push it to remote branch `<ISSUE-ID>`. If the current branch is not `<ISSUE-ID>`, do not commit to the wrong branch; switch or create the issue branch first, unless doing so would endanger unrelated local work.
 - Do not modify Linear directly.
 - Do not load external Linear-ticket skills for this capability; the referenced workflow is self-contained.
+
+## Capability 8: Grill Requirement Into IntentMill Spec
+
+Trigger phrases include:
+
+- `intentmill-ops cap8`
+- `grill spec`
+- `grill requirement`
+- `生成 im-spec`
+- `用 n-grill 问完再生成 spec`
+
+Purpose: use `n-grill` to force human decisions after cap3, then write the grilled execution spec that downstream AC and solution generation must follow.
+
+Read `references/capability-8-grill-spec/grill-spec.md` and follow it exactly. This capability writes:
+
+- `.t2p/tickets/<ISSUE-ID>/refs/im-spec.md`
+
+Rules:
+
+- Run the shared input checks at the top of this skill.
+- Ensure cap1 and cap2 have already prepared the issue worktree and ticket context; run them first if needed.
+- Require `refs/im-req-engineered.md`; if it is missing, run cap3 first.
+- Load and use `n-grill` for the human question loop. If `n-grill` is unavailable in the agent host, stop and report that cap8 cannot continue without it.
+- Ask one grill question at a time. If a question can be answered by inspecting the issue worktree code, inspect the code instead of asking the user.
+- Do not write AC, solution, estimation, implementation plans, code, ticket updates, or Linear updates in cap8.
+- After writing `im-spec.md`, run cap11 targeting `im-spec.md`. If cap11 returns `revise`, repeat or repair cap8 using the gate findings before cap4 starts.
+- Do not modify Linear directly.
+- Do not load external Linear-ticket skills for this capability; `n-grill` is the only required external skill dependency.
 
 ## Capability 11: Review IntentMill Issue Artifacts
 
@@ -194,7 +225,7 @@ Trigger phrases include:
 
 Purpose: review local IntentMill refs before using them to drive agent execution or publishing work back to a planning system.
 
-Read `references/capability-11-quality-gate/quality-gate.md` and follow it exactly. By default this capability reviews the available local artifacts under `.t2p/tickets/<ISSUE-ID>/refs/`. It can also target one or more specific artifacts immediately after cap3, cap4, cap5, or cap6 generation. It writes:
+Read `references/capability-11-quality-gate/quality-gate.md` and follow it exactly. By default this capability reviews the available local artifacts under `.t2p/tickets/<ISSUE-ID>/refs/`. It can also target one or more specific artifacts immediately after cap3, cap8, cap4, cap5, or cap6 generation. It writes:
 
 - `.t2p/tickets/<ISSUE-ID>/refs/im-gate.md`
 

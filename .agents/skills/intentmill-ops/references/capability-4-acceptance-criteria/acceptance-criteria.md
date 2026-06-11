@@ -10,7 +10,7 @@ Cap4 writes exactly:
 
 ## Objective
 
-Create acceptance criteria that translate `refs/im-req-engineered.md` into observable verification conditions. Criteria must cover the requested outcome, relevant edge or negative cases, and important regression-preservation constraints from `.evodocs` and code inspection. Every criterion must carry a stable tracking number. Criteria that should become test cases must be left as normal `AC-N` items. Criteria that should be tracked but should not generate separate test cases must be marked immediately after the number.
+Create acceptance criteria that translate `refs/im-spec.md` into observable verification conditions. Criteria must cover the requested outcome, relevant edge or negative cases, and important regression-preservation constraints from `.evodocs` and code inspection. Every criterion must carry a stable tracking number. Criteria that should become test cases must be left as normal `AC-N` items. Criteria that should be tracked but should not generate separate test cases must be marked immediately after the number.
 
 Good acceptance criteria answer:
 
@@ -27,15 +27,15 @@ Before writing `im-ac.md`:
 
 1. Work from the issue worktree prepared by cap1, normally `.workspace/<project-key>--<ISSUE-ID>`.
 2. Ensure cap2 has initialised or refreshed `.t2p/tickets/<ISSUE-ID>/`.
-3. Require `.t2p/tickets/<ISSUE-ID>/refs/im-req-engineered.md`. If missing, run cap3 first instead of drafting acceptance criteria directly from raw notes.
-4. Read `.t2p/tickets/<ISSUE-ID>/refs/im-req-engineered.md`.
-5. Read `.t2p/tickets/<ISSUE-ID>/refs/im-req-summarized.md` when present.
-6. Read raw sources such as `.t2p/tickets/<ISSUE-ID>/req.md` and `.t2p/tickets/<ISSUE-ID>/notion-*.md` only as fallback or clarification, not as replacements for the engineered requirement.
+3. Require `.t2p/tickets/<ISSUE-ID>/refs/im-spec.md`. If missing, run cap8 first instead of drafting acceptance criteria directly from pre-grill requirements or raw notes.
+4. Read `.t2p/tickets/<ISSUE-ID>/refs/im-spec.md`.
+5. Read `.t2p/tickets/<ISSUE-ID>/refs/im-req-engineered.md` and `.t2p/tickets/<ISSUE-ID>/refs/im-req-summarized.md` only as background when needed to understand source context; the spec is the requirement contract.
+6. Read raw sources such as `.t2p/tickets/<ISSUE-ID>/req.md` and `.t2p/tickets/<ISSUE-ID>/notion-*.md` only as fallback or clarification, not as replacements for the spec.
 7. If `.evodocs/index.json` exists at the issue worktree repo root, read it first and use it as the module map. Select only module docs relevant to the requested product area, workflow, surface, backend service, integration, data flow, or risk area.
 8. Read selected `.evodocs/mod--*.md` files when they sharpen acceptance boundaries, regression risks, contracts, permissions, data integrity, lifecycle rules, or integration behaviour.
 9. Inspect relevant repo-root-relative code paths directly when the repository is available. Search for affected UI text, routes, components, API endpoints, config keys, constants, schema fields, background jobs, permissions, integrations, or existing tests that reveal current behaviour.
 10. Identify critical existing contracts and regression boundaries. Prefer criteria that protect actual flows shown by evodocs and code over generic "does not break existing behaviour" wording.
-11. Keep the engineered requirement central. Evidence should sharpen the criteria, not replace the request with broad module coverage.
+11. Keep the grilled spec central. Evidence should sharpen the criteria, not replace the request with broad module coverage or pre-grill assumptions.
 
 Do not rely on `.evodocs` alone when the repository is available. Evodocs provide orientation; code confirms concrete behaviour and boundaries.
 
@@ -88,7 +88,7 @@ Before finalising `im-ac.md`, run this semantic review internally. Acceptance cr
 
 1. **Required shape and tracking**: The section is a Markdown task list under `## Acceptance criteria`; every item starts with a stable unique `AC-N` number; there are no more than 20 criteria; any item that should be tracked but should not generate a separate test case says `(no separate test case required)` immediately after the number; each item is an acceptance condition, not implementation guidance.
 2. **Grounded in evidence**: Uses relevant `.evodocs` context and direct code inspection when the repository is available. Names actual behaviours, contracts, UI states, API effects, config behaviour, data flows, or lifecycle rules where reasonably discoverable.
-3. **Requirement alignment**: Covers the requested outcome from `refs/im-req-engineered.md` and does not add unrelated product scope.
+3. **Requirement alignment**: Covers the requested outcome from `refs/im-spec.md` and does not add unrelated product scope.
 4. **Acceptance-test ready**: Each normal `AC-N` item can be turned into a manual or automated acceptance/regression test without guessing the expected result; items explicitly marked `(no separate test case required)` are valid tracked conditions but are not expected to generate separate test cases.
 5. **Regression-aware**: Protects important existing behaviours, contracts, permissions, data integrity, lifecycle behaviour, integrations, or UX that evodocs/code shows could be affected.
 6. **Edge-aware**: Includes relevant negative, boundary, permission, loading, empty-state, error, or lifecycle cases when the change plausibly affects them.
@@ -126,4 +126,4 @@ Published project paths must be relative to the issue worktree repo root. Avoid 
 - Implementation tasks disguised as acceptance criteria.
 - Criteria that require reading the agent's mind rather than observing product or system behaviour.
 - Bulky test plans, test commands, QA procedure, or exhaustive matrices.
-- Criteria based only on raw user wording when `im-req-engineered.md`, `.evodocs`, and relevant code are available.
+- Criteria based only on raw user wording or pre-grill `im-req-engineered.md` when `im-spec.md`, `.evodocs`, and relevant code are available.

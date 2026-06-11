@@ -27,6 +27,7 @@ Allowed targeted artifacts:
 
 - `im-req-engineered.md`
 - `im-req-summarized.md`
+- `im-spec.md`
 - `im-ac.md`
 - `im-solution.md`
 - `im-estimation.md`
@@ -34,6 +35,7 @@ Allowed targeted artifacts:
 When cap11 is called immediately after a generation cap:
 
 - After cap3, target `im-req-engineered.md` and `im-req-summarized.md`.
+- After cap8, target `im-spec.md`.
 - After cap4, target `im-ac.md`.
 - After cap5, target `im-solution.md`.
 - After cap6, target `im-estimation.md`.
@@ -48,10 +50,11 @@ If a targeted review returns `revise`, the owning generation capability must reg
 4. In `all` mode, read available generated refs under `.t2p/tickets/<ISSUE-ID>/refs/`, especially:
    - `im-req-engineered.md`
    - `im-req-summarized.md`
+   - `im-spec.md`
    - `im-ac.md`
    - `im-solution.md`
    - `im-estimation.md`
-5. In targeted mode, read the target artifact plus upstream dependencies needed for semantic judgement. For example, review `im-solution.md` against `im-req-engineered.md` and `im-ac.md`; review `im-estimation.md` against `im-solution.md` and `im-ac.md`.
+5. In targeted mode, read the target artifact plus upstream dependencies needed for semantic judgement. For example, review `im-spec.md` against `im-req-engineered.md` and raw sources, review `im-solution.md` against `im-spec.md` and `im-ac.md`, and review `im-estimation.md` against `im-spec.md`, `im-solution.md`, and `im-ac.md`.
 6. If `.evodocs/index.json` exists, use it to choose relevant `.evodocs/mod--*.md` files for grounding checks.
 7. Inspect targeted code paths when the artifact claims concrete modules, files, APIs, config, schemas, jobs, permissions, integrations, or UI surfaces.
 8. Treat missing source evidence or missing generated artifacts as findings. Do not invent replacement content unless the user explicitly asks for edits.
@@ -110,13 +113,26 @@ Apply these checks to `im-req-summarized.md`:
 4. **Sequencing**: It correctly points later work to generate acceptance criteria before solution.
 5. **Signal density**: It preserves the most important product outcome, source-of-truth constraint, and risk rather than summarising into generic project language.
 
+## Spec Artifact Checks
+
+Apply these checks to `im-spec.md` when present:
+
+1. **Required shape**: Contains exactly the top-level sections `Grilled Decisions` and `Engineered Requirement` after the title.
+2. **Grill evidence**: `Grilled Decisions` contains actual question-and-answer decisions from the cap8 `n-grill` loop, not a synthetic decision summary.
+3. **Human decision incorporation**: The engineered requirement is rewritten after the grill and incorporates the answers rather than merely appending them.
+4. **No unresolved blocking decisions**: UI, DB, external API, state-machine, prompt, migration, rollout, permission, and acceptance-impacting decisions are answered, explicitly out of scope, or marked as blocking.
+5. **Code grounding**: Uses relevant evodocs and direct code inspection when available to avoid asking the user for repository facts or inventing existing behaviour.
+6. **Downstream contract quality**: Cap4 can generate meaningful AC from the spec and cap5 can generate a solution without inventing missing decisions.
+7. **Artifact separation**: Does not include AC numbering, solution steps, estimates, test commands, implementation plans, code snippets, or Linear updates.
+8. **Path-safe**: Contains no forbidden local paths and uses repo-root-relative project paths when paths are useful.
+
 ## Acceptance Criteria Checks
 
 Apply these checks to `im-ac.md` when present:
 
 1. **Required shape and tracking**: The section is a Markdown task list under `## Acceptance criteria`; every item starts with a stable unique `AC-N` number; numbering is contiguous from `AC-1`; there are no more than 20 criteria; any item that should be tracked but should not generate a separate test case says `(no separate test case required)` immediately after the number.
 2. **Grounded in evidence**: Criteria use relevant evodocs context and direct code inspection when the repository is available.
-3. **Requirement alignment**: Criteria cover the requested outcome from `im-req-engineered.md` and do not add unrelated scope.
+3. **Requirement alignment**: Criteria cover the requested outcome from `im-spec.md` and do not add unrelated scope.
 4. **Acceptance-test ready**: Each normal `AC-N` item can be turned into a manual or automated acceptance/regression test without guessing the expected result; items explicitly marked `(no separate test case required)` are valid tracked conditions but are not expected to generate separate test cases.
 5. **Regression-aware**: Criteria protect important existing behaviours, contracts, permissions, data integrity, lifecycle behaviour, integrations, or UX.
 6. **Edge-aware**: Criteria include relevant negative, boundary, permission, loading, empty-state, error, or lifecycle cases when the change plausibly affects them.
@@ -136,10 +152,10 @@ Apply these checks to `im-solution.md` when present:
 3. **Grounded in evidence**: Uses relevant evodocs context and direct code inspection when the repository is available.
 4. **Actionable entry point**: Tells the coding agent where to start reading and what implementation path to follow.
 5. **Source-of-truth discipline**: Reuses existing canonical configs, contracts, helpers, stores, services, schemas, or data flows when they exist; does not introduce duplicate config, shadow workflows, or fallback paths that hide invalid states.
-6. **Requirement and AC alignment**: Solves the behaviour requested in `im-req-engineered.md` and satisfies `im-ac.md` when present without adding unrelated scope.
+6. **Requirement and AC alignment**: Solves the behaviour requested in `im-spec.md` and satisfies `im-ac.md` when present without adding unrelated scope.
 7. **Path-safe**: Contains no forbidden local paths; all project paths are repo-root-relative.
 8. **Preservation constraints**: Calls out important existing UX, performance, data, permission, contract, lifecycle, integration, or compatibility behaviours that must remain unchanged.
-9. **Schema boundary discipline**: If the solution proposes a new table, durable store, column set, JSONB schema, event contract, or schema object, it is defined by the requirement, engineered requirement, acceptance criteria, existing design note, or explicit upstream plan. Undefined tables or stores are marked as product or architecture decision gaps, not invented implementation scope.
+9. **Schema boundary discipline**: If the solution proposes a new table, durable store, column set, JSONB schema, event contract, or schema object, it is defined by the spec, acceptance criteria, existing design note, or explicit upstream plan. Undefined tables or stores are marked as product or architecture decision gaps, not invented implementation scope.
 10. **Existing DB constraint inspection**: If the solution changes an existing table, field, constraint, index, unique key, foreign key, check constraint, enum-like value, event-type whitelist, default, or migration, it instructs the coding agent to inspect the current table definition and constraints before editing.
 11. **Compatibility-sensitive migration awareness**: If the solution changes check constraints, event-type whitelists, enum-like columns, unique constraints, or migrations over existing data, it requires checking existing DEV data values or current environment state and preserving historical values unless removal is explicitly required.
 12. **Project DB workflow clarity**: If the project has an established schema source of truth, generated DDL, migration helper, or DEV apply-and-verify process, the solution names that workflow as the required execution path rather than implying that editing schema files alone is sufficient.
@@ -192,7 +208,7 @@ Write `im-gate.md` in this shape:
 
 ## Review Target
 
-<all | im-req-engineered.md | im-req-summarized.md | im-ac.md | im-solution.md | im-estimation.md | comma-separated targets>
+<all | im-req-engineered.md | im-req-summarized.md | im-spec.md | im-ac.md | im-solution.md | im-estimation.md | comma-separated targets>
 
 ## Decision
 
@@ -214,6 +230,7 @@ Write `im-gate.md` in this shape:
 
 - `refs/im-req-engineered.md`: <ready | revise | missing | not reviewed>
 - `refs/im-req-summarized.md`: <ready | revise | missing | not reviewed>
+- `refs/im-spec.md`: <ready | revise | missing | not reviewed>
 - `refs/im-ac.md`: <ready | revise | missing | not reviewed>
 - `refs/im-solution.md`: <ready | revise | missing | not reviewed>
 - `refs/im-estimation.md`: <ready | revise | missing | not reviewed>
@@ -226,6 +243,7 @@ When a targeted review is requested, set non-target artifacts to `not reviewed` 
 Map revise findings back to the owning cap:
 
 - `im-req-engineered.md` and `im-req-summarized.md`: rerun or rewrite cap3.
+- `im-spec.md`: rerun or repair cap8 using `n-grill`.
 - `im-ac.md`: rerun or rewrite cap4.
 - `im-solution.md`: rerun or rewrite cap5.
 - `im-estimation.md`: rerun or rewrite cap6.
@@ -234,9 +252,11 @@ Map revise findings back to the owning cap:
 
 - If `im-req-engineered.md` only restates raw ticket text, require evodocs/code grounding and named regression boundaries.
 - If `im-req-summarized.md` adds new scope, align it back to `im-req-engineered.md`.
+- If `im-spec.md` lacks real question-and-answer grill decisions, rerun cap8 with `n-grill`.
+- If `im-spec.md` leaves a material human decision unanswered but downstream AC or solution would need it, mark the spec `revise` and send that question back through cap8.
 - If acceptance criteria lack `AC-N` numbering, duplicate numbers, or include implementation steps, require a rewrite before solution generation.
 - If solution content says only "update relevant files", require targeted code inspection and named entry points.
-- If solution content introduces a new table, durable store, schema object, or event contract not defined by the requirement, engineered requirement, acceptance criteria, existing design note, or upstream plan, require cap5 to replace it with a decision gap or cite the defining source.
+- If solution content introduces a new table, durable store, schema object, or event contract not defined by the spec, acceptance criteria, existing design note, or upstream plan, require cap5 to replace it with a decision gap or cite the defining source.
 - If solution content changes existing DB tables, fields, constraints, event whitelists, enum-like values, or migrations without requiring inspection of current definitions and constraints, require cap5 to add that investigation step.
 - If solution content tightens compatibility-sensitive constraints without requiring existing DEV data or environment-state inspection, require cap5 to add the compatibility check and preserve historical values unless removal is explicitly required.
 - If solution content treats logs, telemetry, analytics, audit records, or surface events as the only durable business state without an explicit requirement, require cap5 to identify the canonical domain store or mark the store decision as unresolved.

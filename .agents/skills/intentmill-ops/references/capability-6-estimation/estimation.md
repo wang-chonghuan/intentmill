@@ -17,7 +17,7 @@ The estimate should be driven primarily by:
 - `im-solution.md` `### Steps` count and step complexity.
 - `im-ac.md` normal AC count, because normal ACs are expected to generate separate test cases.
 - `im-ac.md` `(no separate test case required)` count, which contributes only small tracking overhead.
-- Cross-module, data, permission, integration, lifecycle, and regression risk visible in `im-req-engineered.md`, `im-ac.md`, `im-solution.md`, evodocs, and code.
+- Cross-module, data, permission, integration, lifecycle, and regression risk visible in `im-spec.md`, `im-ac.md`, `im-solution.md`, evodocs, and code.
 
 Do not output a range, a table, a scoring breakdown, multiple modes, or separate human/agent subtotals.
 
@@ -37,9 +37,10 @@ Before estimating:
 2. Ensure cap2 has initialised or refreshed `.t2p/tickets/<ISSUE-ID>/`.
 3. Require and read:
    - `.t2p/tickets/<ISSUE-ID>/refs/im-req-engineered.md`
+   - `.t2p/tickets/<ISSUE-ID>/refs/im-spec.md`
    - `.t2p/tickets/<ISSUE-ID>/refs/im-ac.md`
    - `.t2p/tickets/<ISSUE-ID>/refs/im-solution.md`
-4. Read `.t2p/tickets/<ISSUE-ID>/refs/im-req-summarized.md` when present.
+4. Read `.t2p/tickets/<ISSUE-ID>/refs/im-req-summarized.md` when present only as background; `im-spec.md` is the requirement contract.
 5. Use `.evodocs/index.json` and relevant `.evodocs/mod--*.md` files when present to understand module boundaries, dependencies, and regression risk.
 6. Inspect targeted code only when the existing artifacts do not provide enough evidence to classify step complexity, AC testability, affected modules, or source-of-truth risk. Prefer small targeted reads over broad dumps.
 

@@ -99,7 +99,8 @@ Use this structure:
 
 ## Next Artifacts
 
-- Acceptance criteria should be generated from `refs/im-req-engineered.md`.
+- Cap8 should use `n-grill` to turn `refs/im-req-engineered.md` into `refs/im-spec.md`.
+- Acceptance criteria should be generated from `refs/im-spec.md`.
 - Solution should be generated only after acceptance criteria are ready.
 - Estimation should be generated only after solution is ready.
 - Each generated artifact should pass targeted cap11 review before the next artifact is generated.
@@ -141,4 +142,4 @@ The artifacts are ready only when:
 - Open risks preserve uncertainty instead of pretending certainty.
 - The summary is consistent with the detailed requirement.
 
-After writing both artifacts, run cap11 targeting `im-req-engineered.md` and `im-req-summarized.md`. If cap11 returns `revise`, rewrite the failed artifact from cap3 using the gate findings and run the same targeted cap11 review again before cap4 starts.
+After writing both artifacts, run cap11 targeting `im-req-engineered.md` and `im-req-summarized.md`. If cap11 returns `revise`, rewrite the failed artifact from cap3 using the gate findings and run the same targeted cap11 review again before cap8 starts.

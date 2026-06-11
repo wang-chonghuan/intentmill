@@ -10,7 +10,7 @@ Cap5 writes exactly:
 
 ## Objective
 
-Create a solution that bridges `refs/im-req-engineered.md` and `refs/im-ac.md` to the repository implementation path. It should tell the coding agent which existing modules, files, contracts, and patterns to inspect first, what change shape to make, what source of truth to reuse, and what constraints to preserve.
+Create a solution that bridges `refs/im-spec.md` and `refs/im-ac.md` to the repository implementation path. It should tell the coding agent which existing modules, files, contracts, and patterns to inspect first, what change shape to make, what source of truth to reuse, and what constraints to preserve.
 
 The solution should be detailed enough that a coding agent can implement by combining the solution with targeted code reading and `.evodocs` context. It should not include tests, because test expectations belong in `im-ac.md`. It must not include code snippets.
 
@@ -29,16 +29,16 @@ Before writing `im-solution.md`:
 
 1. Work from the issue worktree prepared by cap1, normally `.workspace/<project-key>--<ISSUE-ID>`.
 2. Ensure cap2 has initialised or refreshed `.t2p/tickets/<ISSUE-ID>/`.
-3. Require `.t2p/tickets/<ISSUE-ID>/refs/im-req-engineered.md`. If missing, run cap3 first.
+3. Require `.t2p/tickets/<ISSUE-ID>/refs/im-spec.md`. If missing, run cap8 first. Cap8 itself requires cap3 output.
 4. Require `.t2p/tickets/<ISSUE-ID>/refs/im-ac.md`. If missing, run cap4 first.
-5. Read `.t2p/tickets/<ISSUE-ID>/refs/im-req-engineered.md`, `.t2p/tickets/<ISSUE-ID>/refs/im-req-summarized.md` when present, and `.t2p/tickets/<ISSUE-ID>/refs/im-ac.md`.
+5. Read `.t2p/tickets/<ISSUE-ID>/refs/im-spec.md`, `.t2p/tickets/<ISSUE-ID>/refs/im-ac.md`, and pre-grill requirement refs only as background when needed.
 6. Read raw sources such as `.t2p/tickets/<ISSUE-ID>/req.md` and `.t2p/tickets/<ISSUE-ID>/notion-*.md` only as fallback or clarification, not as replacements for engineered refs.
 7. If `.evodocs/index.json` exists at the issue worktree repo root, read it first and use it as the module map. Select only module docs relevant to the requested product area, workflow, surface, backend service, integration, data flow, or risk area.
 8. Read selected `.evodocs/mod--*.md` files for module-level design context, ownership boundaries, integration flows, data contracts, lifecycle rules, and preservation constraints.
 9. Inspect relevant repo-root-relative code paths directly. Prefer targeted search and small file reads over broad code dumps. Search for user-facing terms, component names, API names, config names, constants, schema fields, labels, jobs, integration names, and existing hardcoded values mentioned by the requirement or AC.
 10. Identify the canonical implementation path and any existing configuration, helper, contract, store, service, route, job, schema, or data flow that should be reused.
 11. If an existing source of truth is missing or uncertain, state the code-inspection step the coding agent should take rather than inventing a parallel path.
-12. Keep `im-req-engineered.md` and `im-ac.md` central. Evodocs and code evidence should ground the solution, not replace the requested scope with a generic architecture summary.
+12. Keep `im-spec.md` and `im-ac.md` central. Evodocs and code evidence should ground the solution, not replace the requested scope with a generic architecture summary or pre-grill assumptions.
 
 Do not rely on `.evodocs` alone when the repository is available. Evodocs provide orientation; code provides the implementation map.
 
@@ -89,8 +89,8 @@ When the requested implementation touches database schema, tables, columns, cons
 
 Requirements:
 
-- If the requirement, engineered requirement, acceptance criteria, existing design note, or upstream plan already defines tables, columns, constraints, JSONB schemas, or event contracts, treat those definitions as the implementation boundary. Reuse them directly and do not expand business fields or change semantics unless the source material requires it.
-- Do not create a new table unless it is defined by the requirement, engineered requirement, acceptance criteria, existing design note, or explicit upstream plan. If implementation appears to require an undefined table, record it as a product or architecture decision gap for the coding agent to resolve with the human; do not design or implement the table in the solution.
+- If the spec, acceptance criteria, existing design note, or upstream plan already defines tables, columns, constraints, JSONB schemas, or event contracts, treat those definitions as the implementation boundary. Reuse them directly and do not expand business fields or change semantics unless the source material requires it.
+- Do not create a new table unless it is defined by the spec, acceptance criteria, existing design note, or explicit upstream plan. If implementation appears to require an undefined table, record it as a product or architecture decision gap for the coding agent to resolve with the human; do not design or implement the table in the solution.
 - Required technical columns may only be included when they come from an existing project database convention or schema-generation workflow, such as standard IDs, tenant scoping, timestamps, or audit columns. Name the convention or existing pattern that justifies them.
 - For changes to existing tables, columns, constraints, check constraints, enums, event-type whitelists, indexes, unique constraints, foreign keys, defaults, or migrations, instruct the coding agent to inspect the current table definition and constraints before editing. The solution should name the table or contract and the kind of existing constraint to check.
 - For compatibility-sensitive changes, especially event-type whitelists, check constraints, enum-like columns, unique constraints, and migrations over existing data, require the coding agent to inspect existing DEV data values or current environment state before tightening constraints. Preserve historical values unless the requirement explicitly says to remove or migrate them.
@@ -119,7 +119,7 @@ Before finalising `im-solution.md`, run this semantic review internally. The sol
 3. **Grounded in evidence**: Uses relevant `.evodocs` context and direct code inspection when the repository is available. Names actual modules, repo-root-relative paths, components, helpers, stores, API wrappers, constants, schemas, jobs, or config surfaces where reasonably discoverable.
 4. **Actionable entry point**: Tells the coding agent where to start reading and what implementation path to follow.
 5. **Source-of-truth discipline**: Reuses existing canonical configs, contracts, helpers, stores, services, schemas, or data flows when they exist. Does not introduce duplicate config, shadow workflows, or fallback paths that hide invalid states.
-6. **Requirement and AC alignment**: Solves the behaviour requested in `im-req-engineered.md` and is sufficient to satisfy `im-ac.md` without adding unrelated scope.
+6. **Requirement and AC alignment**: Solves the behaviour requested in `im-spec.md` and is sufficient to satisfy `im-ac.md` without adding unrelated scope.
 7. **Path-safe**: Contains no personal absolute paths, usernames, home directories, skill installation paths, temporary paths, or paths outside the target repo root. All project paths are repo-root-relative.
 8. **Preservation constraints**: Calls out important existing UX, performance, data, permission, contract, lifecycle, integration, or compatibility behaviours that must remain unchanged.
 9. **DB and schema discipline**: If DB/schema work is in scope, the solution does not invent undefined tables, uses defined schema boundaries, requires inspection of existing table definitions and constraints before altering them, preserves compatibility-sensitive existing values, and names the project's required schema-change workflow when one exists.
@@ -158,7 +158,7 @@ If relevant evidence lives outside the repo root, mention the concept or depende
 - Steps that are too vague, such as "update the frontend", "wire the backend", or "add tests".
 - A solution that says "create a config file" without checking for an existing source of truth.
 - A solution that includes test steps, test commands, QA procedure, code snippets, or pseudo-code.
-- A solution that creates a table or durable store not defined by the requirement, engineered requirement, acceptance criteria, existing design note, or upstream plan.
+- A solution that creates a table or durable store not defined by the spec, acceptance criteria, existing design note, or upstream plan.
 - A solution that changes an existing table, event whitelist, check constraint, enum-like value, unique constraint, or migration path without first requiring inspection of the existing definition, constraints, and relevant DEV data.
 - A broad architecture essay that does not tell the coding agent where to start.
 - A list of files without explaining the change path and constraints.
