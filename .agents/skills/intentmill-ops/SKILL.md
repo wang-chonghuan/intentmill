@@ -84,7 +84,7 @@ Trigger phrases include:
 - `generate acceptance criteria`
 - `生成 im-ac`
 
-Purpose: generate developer-ready, test-agent-ready acceptance criteria from the grilled IntentMill spec.
+Purpose: generate developer-ready, test-agent-ready acceptance criteria from the grilled IntentMill spec, grouped by frontend, backend, data-setup, manual, and no-test verification ownership.
 
 Read `references/capability-4-acceptance-criteria/acceptance-criteria.md` and follow it exactly. This capability writes:
 

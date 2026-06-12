@@ -130,18 +130,26 @@ Apply these checks to `im-spec.md` when present:
 
 Apply these checks to `im-ac.md` when present:
 
-1. **Required shape and tracking**: The section is a Markdown task list under `## Acceptance criteria`; every item starts with a stable unique `AC-N` number; numbering is contiguous from `AC-1`; there are no more than 20 criteria; any item that should be tracked but should not generate a separate test case says `(no separate test case required)` immediately after the number.
+1. **Required shape and tracking**: The file has `## Acceptance criteria`; every AC item is a Markdown task-list item under one allowed `###` verification section; allowed sections are `Frontend tests`, `Backend tests`, `Test data setup`, `Manual tests`, and `No separate test required`; every item starts with a stable unique `AC-N` number; numbering is globally contiguous from `AC-1` and does not restart per section; there are no more than 20 criteria.
 2. **Grounded in evidence**: Criteria use relevant evodocs context and direct code inspection when the repository is available.
 3. **Requirement alignment**: Criteria cover the requested outcome from `im-spec.md` and do not add unrelated scope.
-4. **Acceptance-test ready**: Each normal `AC-N` item can be turned into a manual or automated acceptance/regression test without guessing the expected result; items explicitly marked `(no separate test case required)` are valid tracked conditions but are not expected to generate separate test cases.
+4. **Acceptance-test ready**: Each AC item can be routed from its section to the correct frontend, backend, data-preparation, manual, or no-test workflow without guessing the expected result or verification owner.
 5. **Regression-aware**: Criteria protect important existing behaviours, contracts, permissions, data integrity, lifecycle behaviour, integrations, or UX.
 6. **Edge-aware**: Criteria include relevant negative, boundary, permission, loading, empty-state, error, or lifecycle cases when the change plausibly affects them.
 7. **Path-safe**: Criteria contain no forbidden local paths and use repo-root-relative paths only when paths are necessary.
 8. **Concise enough**: Criteria avoid bulky QA matrices, test commands, repeated requirements, code snippets, and over-detailed process text.
-9. **No implementation leakage**: Criteria describe observable outcomes, not how to implement the change.
+9. **No implementation leakage**: Criteria describe observable outcomes or repeatable test-data preconditions, not how to implement the change, run commands, or execute QA procedure.
 10. **Real verification value**: Criteria would catch meaningful implementation mistakes or regressions; they are not just restated requirements split into numbered lines.
 
 Acceptance criteria are ready only if all ten dimensions pass.
+
+Additional section-fit checks:
+
+- `Frontend tests` ACs describe browser-visible behaviour suitable for frontend automation and do not require direct DB/event-table/schema assertions.
+- `Backend tests` ACs describe API, service, schema, DB, permission, event-chain, lifecycle, idempotency, tenant/user isolation, or state-machine behaviour rather than visual layout or button presence.
+- `Test data setup` ACs describe repeatable fixture state, cross-day state, distinct item counts, seeded events, tenant/user records, or reset requirements, not product completion outcomes.
+- `Manual tests` ACs are limited to product, UX, visual, third-party, environment-sensitive, or judgement-heavy checks where automated coverage would be inappropriate or materially brittle.
+- `No separate test required` ACs are limited to scope exclusions, future-work confirmations, or tracked conditions already covered by other criteria; behaviour-critical paths must not be placed there to reduce test count.
 
 ## Solution Checks
 
@@ -254,7 +262,7 @@ Map revise findings back to the owning cap:
 - If `im-req-summarized.md` adds new scope, align it back to `im-req-engineered.md`.
 - If `im-spec.md` lacks real question-and-answer grill decisions, rerun cap8 with `n-grill`.
 - If `im-spec.md` leaves a material human decision unanswered but downstream AC or solution would need it, mark the spec `revise` and send that question back through cap8.
-- If acceptance criteria lack `AC-N` numbering, duplicate numbers, or include implementation steps, require a rewrite before solution generation.
+- If acceptance criteria lack globally contiguous `AC-N` numbering, duplicate numbers, restart numbering inside sections, put AC items outside allowed verification sections, add classification tags or prefixes to AC ids, mismatch AC content with its verification section, or include implementation steps, require a rewrite before solution generation.
 - If solution content says only "update relevant files", require targeted code inspection and named entry points.
 - If solution content introduces a new table, durable store, schema object, or event contract not defined by the spec, acceptance criteria, existing design note, or upstream plan, require cap5 to replace it with a decision gap or cite the defining source.
 - If solution content changes existing DB tables, fields, constraints, event whitelists, enum-like values, or migrations without requiring inspection of current definitions and constraints, require cap5 to add that investigation step.

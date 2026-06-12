@@ -15,8 +15,9 @@ Estimate one total hour value for the recommended development mode. The estimate
 The estimate should be driven primarily by:
 
 - `im-solution.md` `### Steps` count and step complexity.
-- `im-ac.md` normal AC count, because normal ACs are expected to generate separate test cases.
-- `im-ac.md` `(no separate test case required)` count, which contributes only small tracking overhead.
+- `im-ac.md` frontend, backend, and manual AC count, because those ACs are expected to generate separate verification work.
+- `im-ac.md` test-data setup AC count, because repeatable fixture or seed work adds setup effort.
+- `im-ac.md` `No separate test required` AC count, which contributes only small tracking overhead.
 - Cross-module, data, permission, integration, lifecycle, and regression risk visible in `im-spec.md`, `im-ac.md`, `im-solution.md`, evodocs, and code.
 
 Do not output a range, a table, a scoring breakdown, multiple modes, or separate human/agent subtotals.
@@ -70,14 +71,16 @@ If a step is too vague to classify, count it as complex and mention that vaguene
 
 ### Acceptance Criteria and Test-Case Work
 
-Count AC items in `im-ac.md`:
+Count AC items in `im-ac.md` by verification section:
 
-- Normal AC item without `(no separate test case required)`: `+0.30h`
+- AC item under `Frontend tests`, `Backend tests`, or `Manual tests`: `+0.30h`
   - This includes deriving the acceptance test case, running or manually verifying it, and likely minor fix iteration from failures.
-- AC item with `(no separate test case required)`: `+0.05h`
+- AC item under `Test data setup`: `+0.20h`
+  - This includes designing or verifying repeatable fixture, seed, reset, cross-day, tenant/user, or item-state preconditions.
+- AC item under `No separate test required`: `+0.05h`
   - This is tracking/review overhead only.
 
-If a normal AC is unusually broad and implies multiple independent behaviours, add `+0.25h` for that AC and mention broad AC scope in the rationale.
+If a frontend, backend, manual, or test-data setup AC is unusually broad and implies multiple independent behaviours, add `+0.25h` for that AC and mention broad AC scope in the rationale.
 
 ### Context and Risk Adders
 
@@ -106,7 +109,7 @@ After computing `agent_core_hours`, choose one mode and adjust to total hours.
 Choose when:
 
 - Steps are mostly simple/medium and usually no more than 6.
-- Normal test-case AC count is usually no more than 8.
+- Frontend, backend, and manual AC count is usually no more than 8.
 - Source of truth is clear.
 - No unresolved product judgement is required.
 - Regression risk is low or bounded.
