@@ -12,7 +12,7 @@ Run cap1 through cap6 in order and stop at code complete plus unit tests complet
 2. cap2 `init-ticket-context`
 3. cap3 `create-draft`
 4. gate3 `create-draft`
-5. cap4 `draft-grill-loop`
+5. cap4 `create-grill-document`
 6. cap5 `finalize-spec-plan`
 7. gate5 `finalize-spec-plan`
 8. cap6 `dev-unit-test`
@@ -24,12 +24,12 @@ Run cap1 through cap6 in order and stop at code complete plus unit tests complet
 2. Execute cap1 using `references/capability-1-issue-worktree/issue-worktree.md`.
 3. Execute cap2 using `references/capability-2-t2p-context/t2p-context.md`.
 4. Execute cap3 using `references/capability-3-create-draft/create-draft.md`.
-5. Run gate3. If gate3 requires user decisions, move those into cap4 rather than pretending cap3 is final.
-6. Execute cap4 using `references/capability-4-draft-grill-loop/draft-grill-loop.md`. If human interaction is unavailable or blocking decisions remain, stop and report that cap4 is not complete.
+5. Run gate3. If gate3 requires user decisions, move those into the cap4 `im-grill.md` document rather than pretending cap3 is final.
+6. Execute cap4 using `references/capability-4-draft-grill-loop/draft-grill-loop.md`. If `im-grill.md` contains unresolved `TBD` decisions, stop after cap4 and report that human answers are required before cap5.
 7. Execute cap5 using `references/capability-5-finalize-spec-plan/finalize-spec-plan.md`.
-8. Run gate5. If gate5 finds unresolved decisions, return to cap4. If it finds spec/plan quality issues, rerun cap5 with gate findings.
+8. Run gate5. If gate5 finds unresolved decisions before development starts, return to cap4. If it finds spec/plan quality issues, rerun cap5 with gate findings.
 9. Execute cap6 using `references/capability-6-dev-unit-test/dev-unit-test.md`.
-10. Run gate6. If gate6 finds implementation/test gaps, continue cap6. If it finds new decisions, return to cap4. If it finds spec/plan inconsistency, return to cap5 or cap4 as directed.
+10. Run gate6. If gate6 finds implementation/test gaps, continue cap6. If it finds spec/plan inconsistency, return to cap5. Do not return to cap4 from cap6.
 
 ## Boundaries
 
@@ -54,6 +54,7 @@ When cap7 completes, report:
 - `im-grill.md` path under `ticket-worktree-t2p refs path`
 - `im-spec.md` path under `ticket-worktree-t2p refs path`
 - `im-plan.md` path under `ticket-worktree-t2p refs path`
+- `im-handoff.md` path under `ticket-worktree-t2p refs path`
 - ticket-scoped tests path: `ticket-worktree-t2p tests path`
 - unit test commands run
 - gate3/gate5/gate6 statuses

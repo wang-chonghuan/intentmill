@@ -228,7 +228,7 @@ gate 失败处理：
 职责：
 
 - 读取 `AGENTS.md`。
-- 读取 `.autoqa/rules.md`，如果存在。
+- 读取 `.evodocs/constitution.md`，如果存在。
 - 根据 `im-spec.md` 和 `im-plan.md` 开发。
 - 补齐并运行 `.t2p/tickets/<ISSUE-ID>/tests` 下的单元测试。
 - 记录执行结果。

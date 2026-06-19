@@ -1,134 +1,221 @@
 # IntentMill
 
-IntentMill turns raw issue requirements into local, code-grounded planning artifacts: engineered requirements, summaries, acceptance criteria, solutions, and estimates. It is not a Linear clone. Linear remains the source for issue data; IntentMill is the local AI planning and execution control surface.
+IntentMill is the Codex-operated development workflow for turning a Linear tech issue into code-grounded IntentMill artifacts, implementation, and unit tests.
 
-## What It Does
+The primary interaction model is **Codex internal interaction**: a coding agent is invoked from this repository, loads the repo-local `imops` skill, creates or reuses an issue worktree under `.workspace/`, writes IntentMill artifacts into that worktree's `.t2p` ticket directory, then develops and tests in that same issue worktree.
 
-- Pulls selected Linear cycle issues into a local PostgreSQL `issues` table.
-- Shows one focused issue table, filtered by configured project and cycle.
-- Runs Codex in YOLO mode for one issue to generate planning artifacts.
-- Writes successful generated artifacts back into `issues.im_*` fields.
-- Keeps target-repo work under `.workspace/` and out of this repo's Git history.
+The web UI is a secondary interaction surface. It may exist for visibility or another workflow, but it is not the main control surface described here.
 
-## Quick Start
+## Most Important Rule
 
-Create a local `ssot-config.json` or set env vars. `ssot-config.json` is ignored by Git because it can contain secrets.
+When working from this repository, do not implement target project code in the IntentMill repository root.
 
-```bash
-npm install
-npm run intentmill -- health
-npm run intentmill -- init-db
-npm run init-workspace
-npm run dev
+Target project code lives in an issue worktree under `.workspace/`.
+
+For a project and issue, the canonical worktree and ticket paths are:
+
+```text
+.workspace/{project_key}--{issue_id}/
+.workspace/{project_key}--{issue_id}/.t2p/tickets/{issue_id}/
+.workspace/{project_key}--{issue_id}/.t2p/tickets/{issue_id}/refs/
+.workspace/{project_key}--{issue_id}/.t2p/tickets/{issue_id}/tests/
 ```
 
-Open `http://localhost:3000/`.
+Example for `project=nsdk`, `issue-id=ENG-557`:
 
-Useful CLI commands:
-
-```bash
-npm run intentmill -- issues list --sprint Cycle-19
-npm run intentmill -- sync --sprint Cycle-19
-npm run intentmill -- issues show ENG-536
+```text
+.workspace/nsdk--ENG-557/
+.workspace/nsdk--ENG-557/.t2p/tickets/ENG-557/
+.workspace/nsdk--ENG-557/.t2p/tickets/ENG-557/refs/
+.workspace/nsdk--ENG-557/.t2p/tickets/ENG-557/tests/
 ```
 
-## Config
+The coding agent should treat `.workspace/nsdk--ENG-557/` as the target repo root for code inspection, edits, tests, and commits. It should treat `.workspace/nsdk--ENG-557/.t2p/tickets/ENG-557/` as the ticket-local IntentMill and test artifact root.
 
-`ssot-config.json` is the local source of truth for database access, Linear access, projects, and visible cycles.
+## Current Skill
 
-Expected project shape:
+Use `.agents/skills/imops`.
+
+`imops` is the current IntentMill operations skill. It owns the flow from req-only tech issue to draft, grill, final spec/plan, development, and unit tests. It stops after code and unit tests are complete.
+
+The old `.agents/skills/intentmill-ops` skill is deprecated and should not be used for new work. It is kept only for historical compatibility and will be deleted.
+
+## Required Inputs
+
+Every `imops` capability requires:
+
+- `project`: project key or alias from `ssot-config.json`, for example `nsdk` or `narrative-sdk`
+- `issue-id`: Linear issue identifier, for example `ENG-557`
+
+If either value is missing, stop and ask for it. Do not guess the issue id.
+
+## Path Source Of Truth
+
+Concrete path templates live in `ssot-config.json` under `imops.paths`.
+
+Current required path names:
 
 ```json
 {
-  "cycles": [
-    { "name": "Cycle-18" },
-    { "name": "Cycle-19", "default": true },
-    { "name": "Cycle-20" }
-  ],
+  "workspace-root": ".workspace",
+  "base-worktree": ".workspace/{project_key}",
+  "issue-worktree": ".workspace/{project_key}--{issue_id}",
+  "ticket-worktree-t2p": ".workspace/{project_key}--{issue_id}/.t2p/tickets/{issue_id}",
+  "ticket-worktree-t2p-refs": ".workspace/{project_key}--{issue_id}/.t2p/tickets/{issue_id}/refs",
+  "ticket-worktree-t2p-tests": ".workspace/{project_key}--{issue_id}/.t2p/tickets/{issue_id}/tests"
+}
+```
+
+Agents must resolve these paths from the IntentMill repository root and must not invent parallel artifact directories such as `.intentmill/`.
+
+## Artifact Layout
+
+IntentMill artifacts for one ticket live under:
+
+```text
+ticket-worktree-t2p path/
+├── req.md
+├── refs/
+│   ├── im-draft.md
+│   ├── im-grill.md
+│   ├── im-spec.md
+│   └── im-plan.md
+└── tests/
+```
+
+Important meanings:
+
+- `req.md`: req-only tech issue input captured by the target repo's `t2p` flow.
+- `refs/im-draft.md`: rough code-grounded draft, created before grill.
+- `refs/im-grill.md`: human decision loop artifact.
+- `refs/im-spec.md`: final declarative spec after grill.
+- `refs/im-plan.md`: final executable plan after grill.
+- `tests/`: ticket-scoped unit tests required by the development flow.
+
+## imops Flow
+
+Run capabilities through Codex internal interaction:
+
+```text
+Use imops cap1 with project nsdk and issue-id ENG-557.
+Use imops cap2 with project nsdk and issue-id ENG-557.
+Use imops cap3 with project nsdk and issue-id ENG-557.
+Use imops cap4 with project nsdk and issue-id ENG-557.
+Use imops cap5 with project nsdk and issue-id ENG-557.
+Use imops cap6 with project nsdk and issue-id ENG-557.
+```
+
+Capability summary:
+
+- `cap1`: create or reuse the issue worktree at `.workspace/{project_key}--{issue_id}`.
+- `cap2`: initialise or refresh `.t2p/tickets/{issue_id}` in that issue worktree.
+- `cap3`: create `refs/im-draft.md` from `req.md`, `.evodocs`, docs, and code.
+- `cap4`: run the draft grill loop and maintain `refs/im-grill.md` plus the updated draft.
+- `cap5`: finalise `refs/im-spec.md` and `refs/im-plan.md`.
+- `cap6`: implement from the final spec/plan and create/run ticket-scoped unit tests under `tests/`.
+- `cap7`: orchestrate cap1 through cap6.
+
+The full flow stops after code complete and unit tests complete. AutoQA, t2p-review, PR creation, human review, and RG case promotion are intentionally outside `imops`.
+
+## How A Coding Agent Should Work Here
+
+1. Start in the IntentMill repository root.
+2. Load `imops`.
+3. Read `ssot-config.json`.
+4. Resolve `project` and `issue-id`.
+5. Work in the resolved issue worktree under `.workspace/`.
+6. Read target repo instructions from that worktree, especially `AGENTS.md` and `.evodocs/constitution.md`.
+7. Read and write IntentMill artifacts only under the resolved `.t2p/tickets/{issue_id}` path.
+8. Make code changes only in the issue worktree.
+9. Put ticket-scoped unit tests under `.t2p/tickets/{issue_id}/tests`.
+10. Commit and push the target repo branch from the issue worktree when explicitly requested.
+
+For example, for `ENG-557`, code work happens in:
+
+```text
+.workspace/nsdk--ENG-557/
+```
+
+Ticket artifacts happen in:
+
+```text
+.workspace/nsdk--ENG-557/.t2p/tickets/ENG-557/
+```
+
+## UI
+
+The UI is not the source of truth for the development workflow.
+
+If running the UI is needed:
+
+```bash
+npm install
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000/
+```
+
+Treat the UI as an alternate interaction layer. The primary workflow remains Codex plus `imops` operating on `.workspace/` worktrees and `.t2p/tickets/<ISSUE-ID>/` artifacts.
+
+## Config
+
+`ssot-config.json` is the local source of truth for project aliases, repositories, cycles, Linear access, database access, and `imops.paths`.
+
+It is ignored by Git because it can contain secrets. Do not paste secrets from it into docs, tickets, commits, or final responses.
+
+Minimal project shape:
+
+```json
+{
   "projects": {
     "nsdk": {
       "aliases": ["narrative-sdk"],
       "repo": "https://github.com/finoge-app/nsdk.git",
       "default_branch": "staging"
     }
+  },
+  "imops": {
+    "paths": {
+      "workspace-root": ".workspace",
+      "base-worktree": ".workspace/{project_key}",
+      "issue-worktree": ".workspace/{project_key}--{issue_id}",
+      "ticket-worktree-t2p": ".workspace/{project_key}--{issue_id}/.t2p/tickets/{issue_id}",
+      "ticket-worktree-t2p-refs": ".workspace/{project_key}--{issue_id}/.t2p/tickets/{issue_id}/refs",
+      "ticket-worktree-t2p-tests": ".workspace/{project_key}--{issue_id}/.t2p/tickets/{issue_id}/tests"
+    }
   }
 }
 ```
 
-Environment fallback:
+## Deprecated
 
-```bash
-DATABASE_URL=postgresql://user:password@host:5432/database?sslmode=require
-POSTGRES_SCHEMA=dm-schema
-LINEAR_API_KEY=...
-```
+`intentmill-ops` is deprecated.
 
-## UI Flow
-
-1. Select project and cycle.
-2. Click `Pull` to sync local issue rows from Linear.
-3. Open a row's actions menu.
-4. Click `Plan`.
-5. Wait for the row timer to finish.
-6. Inspect `IM Summary`, `IM Solution`, `IM Criteria`, and `IM Estimation`.
-
-Generation only writes database fields after the full run succeeds, the final gate is `ready`, and the issue worktree's `.t2p/tickets/<ISSUE-ID>/` artifacts have been committed and pushed. Failed runs write nothing to `im_*` fields and keep stderr logs for debugging.
-
-## Architecture
-
-- `src/routes/index.tsx`: single-page TanStack Start UI.
-- `src/server/issues/*`: issue table reads/writes.
-- `src/server/linear/*`: Linear cycle sync.
-- `src/server/codex-runs/*`: Codex exec runner, status polling, timeout handling, artifact persistence.
-- `src/server/db/*`: PostgreSQL schema and connection setup.
-- `scripts/init-workspace.ts`: clones or updates configured project repos under `.workspace/`.
-- `.agents/skills/intentmill-ops`: repo-local agent workflow for issue planning.
-
-The app deliberately keeps the UI thin. Heavy AI work is delegated to Codex. The server owns deterministic boundaries: config resolution, process spawning, status tracking, file reads, and database writes.
-
-## Tech Stack
-
-- React 19
-- TanStack Start / Router / Table
-- Tailwind CSS
-- React Markdown
-- PostgreSQL via `pg`
-- Codex CLI
-- Vitest
-- TypeScript
-
-## intentmill-ops Skill
-
-`intentmill-ops` is the repo-local skill used by Codex to produce planning artifacts for configured project repos.
-
-Every capability requires:
-
-- `project`: key or alias from `ssot-config.json`
-- `issue-id`: issue id such as `ENG-536`
-
-Main capabilities:
-
-- `cap1`: create or reuse `.workspace/<project>--<issue-id>` worktree.
-- `cap2`: initialize or refresh target project `.t2p` issue context.
-- `cap3`: generate `im-req-engineered.md` and `im-req-summarized.md`.
-- `cap4`: generate `im-ac.md`.
-- `cap5`: generate `im-solution.md`.
-- `cap6`: generate `im-estimation.md`.
-- `cap7`: run cap1 through cap6 with quality gates.
-- `cap11`: semantic gate review for generated artifacts.
-
-Typical direct Codex prompt:
+Do not start new work with:
 
 ```text
-Use .agents/skills/intentmill-ops.
-Run intentmill-ops cap7 with project nsdk and issue-id ENG-536.
+.agents/skills/intentmill-ops
 ```
 
-The UI's `Plan` action sends that same workflow through `codex exec --dangerously-bypass-approvals-and-sandbox`.
+Use:
 
-## Verify
+```text
+.agents/skills/imops
+```
+
+The deprecated skill will be removed after old references are cleaned up.
+
+## Verify This Repository
+
+For IntentMill app/tooling changes:
 
 ```bash
 npm test
 npm run build
 ```
+
+For target project work, run tests from the resolved issue worktree, not from the IntentMill repository root.

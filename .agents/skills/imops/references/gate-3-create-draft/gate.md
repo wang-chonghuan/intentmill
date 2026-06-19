@@ -4,14 +4,18 @@ Use this gate after cap3 produces `ticket-worktree-t2p refs path/im-draft.md`.
 
 This gate evaluates whether the draft is good enough to feed the human grill. It does not create new draft content on its own.
 
+Apply `references/common/spec-plan-dev-review-common-rules.md` and `references/common/spec-plan-artifact-rules.md` while evaluating draft spec, draft plan, and evidence quality.
+
 ## Pass Conditions
 
 - `im-draft.md` exists in `ticket-worktree-t2p refs path`.
 - It has the required top-level sections from cap3.
 - It is based on the tech-issue requirement.
-- It confirms `AGENTS.md` and `.t2p/rules.md` were read and obeyed.
+- It confirms `AGENTS.md` and `.evodocs/constitution.md` were read and obeyed.
 - It uses `.evodocs` evidence.
 - It includes targeted code inspection evidence.
+- It follows `references/common/spec-plan-dev-review-common-rules.md`.
+- It follows `references/common/spec-plan-artifact-rules.md`.
 - It uses `.evodocs` to guide code inspection and records any evodocs/code disagreement with code as authoritative.
 - It records external docs fetched through `find-docs` / Context7 when external library/API/SDK/cloud usage affects the draft, or states why no external docs were needed.
 - It records `nf-db` usage when database operations were needed, or states why no database operation was needed.
@@ -27,12 +31,14 @@ This gate evaluates whether the draft is good enough to feed the human grill. It
 Review `im-draft.md` against the tech-issue requirement, evodocs, and inspected code:
 
 - Does the draft preserve the user's intent?
-- Does the draft follow `AGENTS.md` and `.t2p/rules.md`?
+- Does the draft follow `AGENTS.md` and `.evodocs/constitution.md`?
 - Is the draft self-contained enough for a later final spec?
 - Does it distinguish confirmed facts, assumptions, risks, and decisions?
 - Does the draft use evodocs as a guide to read the right code, while treating code as authoritative when there is conflict?
 - Does the draft prefer existing architecture, existing helpers/libraries/config/schema paths, and the simplest effective implementation?
 - Does the draft avoid unnecessary changes to unrelated code and behavior?
+- Does the draft follow the common evidence and planning principles?
+- Does the draft follow the common spec and plan artifact rules?
 - Does `## Grill Required` correctly reflect likely UI, DB/schema, prompt, state machine, external API, new dependency, new service, config/secrets/deployment, compatibility, or scope decisions?
 - Does the draft plan stay rough, or does it overcommit to exact implementation before grill?
 - Are code findings used to sharpen requirement boundaries rather than replace the requirement?
@@ -57,13 +63,14 @@ Fail when any of these are true:
 - `im-draft.md` contains `## Grill Decision Points`.
 - The draft says no evodocs were read.
 - The draft says no code was inspected without explaining why no code inspection was needed.
-- The draft omits `AGENTS.md` or `.t2p/rules.md` from sources.
+- The draft omits `AGENTS.md` or `.evodocs/constitution.md` from sources.
 - External library/API/SDK/cloud usage affects the draft, but no `find-docs` / Context7 evidence or explicit limitation is recorded.
 - A database operation was performed or proposed without using `nf-db`.
 - Frontend UI work is proposed without reading/following the relevant frontend `DESIGN.md` when that file exists.
 - The draft proposes a new library, helper, config path, schema path, or architecture without explaining why existing project options are insufficient.
 - The draft proposes unrelated code or behavior changes not required by the tech issue.
 - `## Grill Required` is `no` while the draft contains unresolved assumptions about UI, DB/schema, prompt, state machine, external API, dependency, service, config/secrets/deployment, compatibility, or scope.
+- `## Grill Required` is `completed` in cap3 output before cap4 has produced and resolved `im-grill.md`.
 
 ## Failure Handling
 

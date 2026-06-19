@@ -18,7 +18,7 @@ AI根据 im-grill-answers.md重新生成 im-spec.md和im-plan.md，覆盖掉之�
 然后再生成im-ac.md
 
 然后用一个goal，根据im-spec.md和im-plan.md进行开发。
-开发过程中要遵守 AGENTS.md的要求，遵守 .autoqa/rules.md的要求，要使用autoqa.md生成相关的ac-cases（根据 im-ac.md），以及在 .t2p/tickets/<ticket-id>/tests 目录下生成单元测试，前者确保工单最终通过验收，后者确保开发过程中的环节执行正确。
+开发过程中要遵守 AGENTS.md的要求，遵守 .evodocs/constitution.md的要求，要使用autoqa.md生成相关的ac-cases（根据 im-ac.md），以及在 .t2p/tickets/<ticket-id>/tests 目录下生成单元测试，前者确保工单最终通过验收，后者确保开发过程中的环节执行正确。
 
 intentmill开发完毕。
 ====im结束
