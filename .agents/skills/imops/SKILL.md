@@ -1,6 +1,6 @@
 ---
 name: imops
-description: Load when the user asks to run the new IntentMill operations flow, initialise an issue worktree, initialise t2p ticket artifacts, create im-draft.md, create im-grill.md, finalise im-spec.md/im-plan.md, develop and unit test from IntentMill artifacts, or invokes imops cap1/cap2/cap3/cap4/cap5/cap6/cap7. Use for IntentMill-managed project repos from ssot-config.json.
+description: Load when the user asks to run the new IntentMill operations flow, initialise an issue worktree, initialise t2p ticket artifacts, create im-draft.md from a requirement or predraft, create im-grill.md, finalise im-spec.md/im-plan.md, develop and unit test from IntentMill artifacts, or invokes imops cap1/cap2/cap3/cap3p/cap4/cap5/cap6/cap7. Use for IntentMill-managed project repos from ssot-config.json.
 ---
 
 # imops
@@ -56,6 +56,7 @@ IntentMill artifacts for an issue live under `ticket-worktree-t2p path`:
 ```text
 ticket-worktree-t2p path/
 ├── refs/
+│   ├── im-predraft.md
 │   ├── im-draft.md
 │   ├── im-grill.md
 │   ├── im-spec.md
@@ -64,7 +65,7 @@ ticket-worktree-t2p path/
 └── tests/
 ```
 
-Use these exact filenames. `im-grill.md` is the canonical grill artifact; do not use any generic grill artifact as the final IntentMill artifact.
+Use these exact filenames. `im-predraft.md` is an optional cap3p input artifact. `im-grill.md` is the canonical grill artifact; do not use any generic grill artifact as the final IntentMill artifact.
 
 Capabilities 3, 4, and 5 must write only under `ticket-worktree-t2p refs path` for IntentMill draft, grill, spec, and plan artifacts. Do not create or use a worktree-root `.intentmill/` directory in this skill.
 
@@ -73,6 +74,7 @@ Capabilities 3, 4, and 5 must write only under `ticket-worktree-t2p refs path` f
 When a capability has a matching gate, run the capability, run the gate, and rerun the capability with gate findings until the gate passes or a user decision is required.
 
 - cap3 `create-draft` must pass `references/gate-3-create-draft/gate.md` before cap4 starts.
+- cap3p `create-draft-from-predraft` must pass `references/gate-3p-create-draft-from-predraft/gate.md` before cap4 starts.
 - cap4 `create-grill-document` uses its own completion check instead of a sibling gate.
 - cap5 `finalize-spec-plan` must pass `references/gate-5-finalize-spec-plan/gate.md` before cap6 starts.
 - cap6 `dev-unit-test` must pass `references/gate-6-dev-unit-test/gate.md` before reporting the issue complete for this skill.
@@ -115,6 +117,19 @@ Trigger phrases include:
 Purpose: read the tech issue requirement, `.evodocs`, and relevant code to create `ticket-worktree-t2p refs path/im-draft.md`. The draft contains rough spec/plan findings, assumptions, risks, and a `Grill required` marker. It does not create `im-grill.md`.
 
 Read `references/capability-3-create-draft/create-draft.md`, `references/common/spec-plan-dev-review-common-rules.md`, and `references/common/spec-plan-artifact-rules.md`, produce `im-draft.md`, then run `references/gate-3-create-draft/gate.md`. Cap4 owns creation and maintenance of `im-grill.md`.
+
+## Capability 3P: Create Draft From Predraft
+
+Trigger phrases include:
+
+- `imops cap3p`
+- `create draft from predraft`
+- `predraft-to-draft`
+- `根据 im-predraft 生成 im-draft`
+
+Purpose: read `ticket-worktree-t2p refs path/im-predraft.md` as the primary user intent source, then use `.evodocs`, relevant code, and optional ticket background to create `ticket-worktree-t2p refs path/im-draft.md`. This is an alternate cap3 entrypoint for situations where the Linear requirement is too vague or has been superseded by a user-authored design predraft. It does not create `im-grill.md`.
+
+Read `references/capability-3p-predraft-to-draft/predraft-to-draft.md`, `references/common/spec-plan-dev-review-common-rules.md`, and `references/common/spec-plan-artifact-rules.md`, produce `im-draft.md`, then run `references/gate-3p-create-draft-from-predraft/gate.md`. Cap4 owns creation and maintenance of `im-grill.md`.
 
 ## Capability 4: Create Grill Document
 
